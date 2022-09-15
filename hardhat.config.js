@@ -18,6 +18,12 @@ module.exports = {
     polygon: {
       url: URL_ALCHEMY_POLYGON,
       accounts: [PRIVATE_KEY]
+    },
+    hardhat: {
+      forking: {
+        url: URL_ALCHEMY_POLYGON,
+        blockNumber: 33088291
+      }
     }
   },
   etherscan: {

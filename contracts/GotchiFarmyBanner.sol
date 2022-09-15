@@ -30,9 +30,9 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
     uint256 public price;
     uint256 public id;
 
-    address public gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
-    address public artist = 0x860980abaD6267C6dd35D8B1C1B14Fa6741DB3A6;
-    uint96 public percentageArtist = 1500; // 15%
+    address public gotchiFarmyVault;
+    address public artist;
+    uint96 public percentageArtist; // 15%
 
     GHST public ghst;
     address  private constant GHST_CONTRACT = 0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7;
@@ -49,7 +49,10 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
         symbol = "BANNER";
         name = "Gotchi Farmy Banner";
         ghst = GHST(GHST_CONTRACT);
+        percentageArtist = 1500; // 15%
         _setDefaultRoyalty(gotchiFarmyVault, 1000); // 10%
+        gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
+        artist = 0x860980abaD6267C6dd35D8B1C1B14Fa6741DB3A6;
     }
 
     // @notice The function to mint new banner, free for admin only and 5 matic for user
@@ -62,12 +65,12 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
             uint256 _vaultAmount = _amountInGhst - _artistAmount;
 
             // Transfer the GHST to artist
-            bool success = ghst.transferFrom(msg.sender, artist, _artistAmount);
-            require(success, "BANNER: GHST transfer to artist failed");
+            bool successTransferArstist = ghst.transferFrom(msg.sender, artist, _artistAmount);
+            require(successTransferArstist, "BANNER: GHST transfer to artist failed");
 
             // Transfer the GHST to vault
-            bool success = ghst.transferFrom(msg.sender, gotchiFarmyVault, _vaultAmount);
-            require(success, "BANNER: GHST transfer to vault failed");
+            bool successTransferGotchiFarmyVault = ghst.transferFrom(msg.sender, gotchiFarmyVault, _vaultAmount);
+            require(successTransferGotchiFarmyVault, "BANNER: GHST transfer to vault failed");
         }
 
         _mint(msg.sender, id, amount, "");
@@ -103,7 +106,7 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
 
     // @notice The function to change the gotchi farmy vault address
     function changeGotchiFarmyVault(address _gotchiFarmyVault) external onlyOwner {
-        require(_artist != address(0), "BANNER: Invalid address");
+        require(_gotchiFarmyVault != address(0), "BANNER: Invalid address");
         gotchiFarmyVault = _gotchiFarmyVault;
     }
 
@@ -115,8 +118,8 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
 
     // @notice  The function to change the percentage of the artist
     function changePercentageArtist(uint256 _percentageArtist) external onlyOwner {
-        require(_percentageArtist <= _feeDenominator(), "BANNER: royalty fee will exceed salePrice");
-        percentageArtist = _percentageArtist;
+        require(_percentageArtist <= _feeDenominator(), "BANNER: Percentage artist must be less than 10001 (100.01%)");
+        percentageArtist = uint96(_percentageArtist);
     }
 
     // @notice Update the royalties
@@ -145,7 +148,11 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
     }
 
     // @notice THe function to burn multiple NFT
-    function burnBatch(address _from, uint256[] _ids, uint256[] _amounts) external onlyOwner {
+    function burnBatch(address _from, uint256[] memory _ids, uint256[] memory _amounts) external onlyOwner {
         _burnBatch(_from, _ids, _amounts);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC2981Upgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
