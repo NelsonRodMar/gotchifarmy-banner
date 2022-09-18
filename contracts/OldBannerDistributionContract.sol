@@ -10,6 +10,7 @@ pragma solidity ^0.8.13;
 */
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -22,7 +23,7 @@ interface GHST {
     function balanceOf(address src) external view returns (uint);
 }
 
-contract OldBannerDistribution is  OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
 
     uint256 public price;
     IERC1155Upgradeable public oldBanner;
@@ -37,6 +38,7 @@ contract OldBannerDistribution is  OwnableUpgradeable, PausableUpgradeable, Reen
     address  private constant OLD_GUILD_BANNER_CONTRACT = 0x2953399124F0cBB46d2CbACD8A89cF0599974963;
 
     function initialize() public initializer {
+        __ERC1155Holder_init();
         __Ownable_init();
         _pause();
         oldBanner = IERC1155Upgradeable(OLD_GUILD_BANNER_CONTRACT);
@@ -106,7 +108,7 @@ contract OldBannerDistribution is  OwnableUpgradeable, PausableUpgradeable, Reen
 
     // @notice The function to change the ID of the banner distributed
     function changeId(uint256 _id) public onlyOwner {
-        require(_id > 0, "OLDBANNER: Invalid ID");
+        require(_id > 0, "OLDBANNER: ID must be greater than 0");
         id = _id;
     }
 }

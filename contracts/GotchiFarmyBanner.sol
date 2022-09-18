@@ -50,14 +50,14 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
         name = "Gotchi Farmy Banner";
         ghst = GHST(GHST_CONTRACT);
         percentageArtist = 1500; // 15%
-        _setDefaultRoyalty(gotchiFarmyVault, 1000); // 10%
         gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
         artist = 0x860980abaD6267C6dd35D8B1C1B14Fa6741DB3A6;
+        _setDefaultRoyalty(gotchiFarmyVault, 1000); // 10%
     }
 
     // @notice The function to mint new banner, free for admin only and 5 matic for user
     function mint(uint256 amount, uint256 _amountInGhst) public whenNotPaused nonReentrant {
-        require(amount > 0, "BANNER: You need to buy at least one banner");
+        require(amount > 0, "BANNER: Amount must be greater than 0");
         require(msg.sender == owner() || _amountInGhst >= price * amount, "BANNER: Not enough GHST or not admin");
         // Transfer the GHST if not admin
         if (msg.sender != owner()) {
