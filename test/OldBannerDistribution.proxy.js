@@ -172,8 +172,60 @@ describe('OldBannerDistribution (proxy)', function () {
     });
 
 
+    describe("🏳 ditribution(uint256, uint256) test require", function () {
+        it("Test the require()...", async function () {
+            const [owner] = await ethers.getSigners();
+            let oldBannerId = "60626711385683478859139410508102520275389626460571300415968402737270945218660";
+            const openseaContract = new ethers.Contract("0x2953399124f0cbb46d2cbacd8a89cf0599974963", openseaContractAbi);
+            const ghstContract = new ethers.Contract("0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7", ghstContractAbi);
+
+            console.log('\t', "▶️ GotchiFarmy send old banner to the contract...");
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [gotchiFarmyWalletAddress],
+            });
+            let gotchiFarmyAccount = await ethers.getSigner(gotchiFarmyWalletAddress);
+
+            let gotchiFarmyOldBannerBalance = await openseaContract.connect(gotchiFarmyAccount).balanceOf(gotchiFarmyAccount.address, oldBannerId);
+            console.log('\t', "🏳 GotchiFarmy old banner balance : ", gotchiFarmyOldBannerBalance.toString());
+            let contractOldBannerBalance = await openseaContract.connect(gotchiFarmyAccount).balanceOf(oldBannerDistribution.address, oldBannerId);
+            console.log('\t', "🏳 Contract old banner balance : ", contractOldBannerBalance.toString());
+
+            await openseaContract.connect(gotchiFarmyAccount).safeTransferFrom(gotchiFarmyAccount.address, oldBannerDistribution.address, oldBannerId, 1, "0x");
+            let newContractOldBannerBalance = await openseaContract.connect(gotchiFarmyAccount).balanceOf(oldBannerDistribution.address, oldBannerId);
+            let newGotchiFarmyOldBannerBalance = await openseaContract.connect(gotchiFarmyAccount).balanceOf(gotchiFarmyAccount.address, oldBannerId);
+            expect(newGotchiFarmyOldBannerBalance).to.equal(gotchiFarmyOldBannerBalance.sub(1));
+            console.log('\t', "🏳 GotchiFarmy new banner balance : ", newGotchiFarmyOldBannerBalance.toString());
+            expect(newContractOldBannerBalance).to.equal(1);
+            console.log('\t', "🏳 Contract new banner balance : ", newContractOldBannerBalance.toString());
+
+            // NelsonRodMar try to buy more old banner than in contract
+            console.log('\t', "▶️ NelsonRodMar try to buy more old banner than in contract...");
+            await oldBannerDistribution.connect(owner).unpause();
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [nelsonRodMarWalletAddress],
+            });
+            let nelsonRodMarAccount = await ethers.getSigner(nelsonRodMarWalletAddress);
+            await ghstContract.connect(nelsonRodMarAccount).approve(oldBannerDistribution.address, ethers.utils.parseEther('20'));
+            await expect(oldBannerDistribution.connect(nelsonRodMarAccount).distribution(2, ethers.utils.parseEther('20'))).to.be.revertedWith("ERC1155: insufficient balance for transfer");
+            console.log("\t", "✅ Test passed !");
+
+            // NelsonRodMar try to buy old banner with 0 price
+            console.log('\t', "▶️ NelsonRodMar try to buy old banner with 0 GHST...");
+            await expect(oldBannerDistribution.connect(nelsonRodMarAccount).distribution(1, 0)).to.be.revertedWith("OLDBANNER: Not enough GHST");
+            console.log("\t", "✅ Test passed !");
+
+            // NelsonRodMar try to buy old banner with 0 quantity
+            console.log('\t', "▶️ NelsonRodMar try to buy 0 old banner...");
+            await expect(oldBannerDistribution.connect(nelsonRodMarAccount).distribution(0, price)).to.be.revertedWith("OLDBANNER: Amount must be greater than 0");
+            console.log("\t", "✅ Test passed !");
+        });
+    });
+
+
     describe("🏳 ditribution(uint256, uint256)", function () {
-        it("Free for the owner paid for the other...", async function () {
+        it("Try to buy one banner...", async function () {
             const [owner] = await ethers.getSigners();
             let oldBannerId = "60626711385683478859139410508102520275389626460571300415968402737270945218660";
             const openseaContract = new ethers.Contract("0x2953399124f0cbb46d2cbacd8a89cf0599974963", openseaContractAbi);

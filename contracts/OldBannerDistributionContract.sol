@@ -51,7 +51,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
 
     // @notice The function to buy an old banner
     function distribution(uint256 amount, uint256 _amountInGhst) public whenNotPaused nonReentrant {
-        require(amount > 0, "You need to buy at least one banner");
+        require(amount > 0, "OLDBANNER: Amount must be greater than 0");
         require(_amountInGhst >= price * amount, "OLDBANNER: Not enough GHST");
 
         uint256 _artistAmount = (_amountInGhst / 10000) * percentageArtist;
