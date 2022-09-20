@@ -9,19 +9,12 @@ pragma solidity ^0.8.13;
                                                          |___/
 */
 
+import './interfaces/IGhst.sol';
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
-interface GHST {
-    function transfer(address dst, uint amt) external returns (bool);
-
-    function transferFrom(address src, address dst, uint amt) external returns (bool);
-
-    function balanceOf(address src) external view returns (uint);
-}
 
 contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
 
@@ -33,7 +26,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
     address public artist;
     uint96 public percentageArtist;
 
-    GHST public ghst;
+    IGhst public ghst;
     address  private constant GHST_CONTRACT = 0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7;
     address  private constant OLD_GUILD_BANNER_CONTRACT = 0x2953399124F0cBB46d2CbACD8A89cF0599974963;
 
@@ -42,7 +35,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
         __Ownable_init();
         _pause();
         oldBanner = IERC1155Upgradeable(OLD_GUILD_BANNER_CONTRACT);
-        ghst = GHST(GHST_CONTRACT);
+        ghst = IGhst(GHST_CONTRACT);
         price = 10 ether;
         percentageArtist = 1500; // 15%
         gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
@@ -53,6 +46,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
     function distribution(uint256 amount, uint256 _amountInGhst) public whenNotPaused nonReentrant {
         require(amount > 0, "OLDBANNER: Amount must be greater than 0");
         require(_amountInGhst >= price * amount, "OLDBANNER: Not enough GHST");
+        require(oldBanner.balanceOf(address(this), id) >= amount, "OLDBANNER: Not enough old banner");
 
         uint256 _artistAmount = (_amountInGhst / 10000) * percentageArtist;
         uint256 _vaultAmount = _amountInGhst - _artistAmount;

@@ -208,7 +208,7 @@ describe('OldBannerDistribution (proxy)', function () {
             });
             let nelsonRodMarAccount = await ethers.getSigner(nelsonRodMarWalletAddress);
             await ghstContract.connect(nelsonRodMarAccount).approve(oldBannerDistribution.address, ethers.utils.parseEther('20'));
-            await expect(oldBannerDistribution.connect(nelsonRodMarAccount).distribution(2, ethers.utils.parseEther('20'))).to.be.revertedWith("ERC1155: insufficient balance for transfer");
+            await expect(oldBannerDistribution.connect(nelsonRodMarAccount).distribution(2, ethers.utils.parseEther('20'))).to.be.revertedWith("OLDBANNER: Not enough old banner");
             console.log("\t", "✅ Test passed !");
 
             // NelsonRodMar try to buy old banner with 0 price

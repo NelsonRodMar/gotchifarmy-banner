@@ -9,19 +9,13 @@ pragma solidity ^0.8.13;
                                                          |___/
 */
 
+import './interfaces/IGhst.sol';
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-interface GHST {
-    function transfer(address dst, uint amt) external returns (bool);
-
-    function transferFrom(address src, address dst, uint amt) external returns (bool);
-
-    function balanceOf(address src) external view returns (uint);
-}
 
 contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
 
@@ -34,7 +28,7 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
     address public artist;
     uint96 public percentageArtist; // 15%
 
-    GHST public ghst;
+    IGhst public ghst;
     address  private constant GHST_CONTRACT = 0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7;
 
     event NewMint(address indexed _to, uint256 indexed _id, uint256 _amount);
@@ -48,7 +42,7 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
         id = 5;
         symbol = "BANNER";
         name = "Gotchi Farmy Banner";
-        ghst = GHST(GHST_CONTRACT);
+        ghst = IGhst(GHST_CONTRACT);
         percentageArtist = 1500; // 15%
         gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
         artist = 0x860980abaD6267C6dd35D8B1C1B14Fa6741DB3A6;
