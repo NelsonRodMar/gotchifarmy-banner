@@ -147,6 +147,6 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC2981Upgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return ERC1155Upgradeable.supportsInterface(interfaceId) || ERC2981Upgradeable.supportsInterface(interfaceId) ;
     }
 }
