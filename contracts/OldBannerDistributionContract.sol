@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
                                                          |___/
 */
 
-import './interfaces/IGhst.sol';
+import './interfaces/IERC20.sol';
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -26,7 +26,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
     address public artist;
     uint96 public percentageArtist;
 
-    IGhst public ghst;
+    IERC20 public ghst;
     address  private constant GHST_CONTRACT = 0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7;
     address  private constant OLD_GUILD_BANNER_CONTRACT = 0x2953399124F0cBB46d2CbACD8A89cF0599974963;
 
@@ -35,7 +35,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
         __Ownable_init();
         _pause();
         oldBanner = IERC1155Upgradeable(OLD_GUILD_BANNER_CONTRACT);
-        ghst = IGhst(GHST_CONTRACT);
+        ghst = IERC20(GHST_CONTRACT);
         price = 10 ether;
         percentageArtist = 1500; // 15%
         gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
@@ -46,7 +46,7 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
     function distribution(uint256 amount, uint256 _amountInGhst) public whenNotPaused nonReentrant {
         require(amount > 0, "OLDBANNER: Amount must be greater than 0");
         require(_amountInGhst >= price * amount, "OLDBANNER: Not enough GHST");
-        require(oldBanner.balanceOf(address(this), id) >= amount, "OLDBANNER: Not enough old banner");
+        require(amount <= oldBanner.balanceOf(address(this), id), "OLDBANNER: Not enough old banner");
 
         uint256 _artistAmount = (_amountInGhst / 10000) * percentageArtist;
         uint256 _vaultAmount = _amountInGhst - _artistAmount;
@@ -88,6 +88,30 @@ contract OldBannerDistribution is  ERC1155HolderUpgradeable, OwnableUpgradeable,
     function changePercentageArtist(uint96 _percentageArtist) public onlyOwner {
         require(_percentageArtist <= 10000, "OLDBANNER: Percentage artist must be less than 10001 (100.01%)");
         percentageArtist = uint96(_percentageArtist);
+    }
+
+    // @notice The function to withdraw the token stuck in the contract
+    function withdrawERC20Stuck(address tokenAddress) public onlyOwner {
+        require(tokenAddress != address(0), "OLDBANNER: Invalid token address");
+        IERC20 token = IERC20(tokenAddress);
+        uint256 balance = token.balanceOf(address(this));
+        require(balance > 0, "OLDBANNER: No token to withdraw");
+        bool successTransfer =  token.transfer(msg.sender, balance);
+        require(successTransfer, "OLDBANNER: Token transfer to owner failed");
+    }
+
+    // @notice The function to withdraw the Matic stuck in the contract
+    function withdrawMaticStuck() public onlyOwner {
+        require (address(this).balance > 0, "OLDBANNER: No Matic to withdraw");
+        bool successTransfer =  payable(msg.sender).send(address(this).balance);
+        require(successTransfer, "OLDBANNER: Token transfer to owner failed");
+    }
+
+    // @notice The function to withdraw the old banner in the contract
+    function withdrawOldBanner(uint256 amount) public onlyOwner {
+        require(amount > 0, "OLDBANNER: Amount must be greater than 0");
+        require(amount <= oldBanner.balanceOf(address(this), id), "OLDBANNER: Not enough old banner");
+        oldBanner.safeTransferFrom(address(this), msg.sender, id, amount, "");
     }
 
     // @notice Let the owner pause the contract

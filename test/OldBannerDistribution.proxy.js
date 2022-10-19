@@ -223,6 +223,93 @@ describe('OldBannerDistribution (proxy)', function () {
         });
     });
 
+    describe("🏳↗️ withdrawOldBanner(uint256)", function () {
+        it("Try withdrawOldBanner function...", async function () {
+            const [owner] = await ethers.getSigners();
+            let oldBannerId = "60626711385683478859139410508102520275389626460571300415968402737270945218660";
+            const openseaContract = new ethers.Contract("0x2953399124f0cbb46d2cbacd8a89cf0599974963", openseaContractAbi);
+            let nbToken = 3;
+
+            console.log('\t', "▶️ GotchiFarmy send old banner to the contract");
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [gotchiFarmyWalletAddress],
+            });
+            let gotchiFarmyAccount = await ethers.getSigner(gotchiFarmyWalletAddress);
+            await openseaContract.connect(gotchiFarmyAccount).safeTransferFrom(gotchiFarmyAccount.address, oldBannerDistribution.address, oldBannerId, nbToken, "0x");
+            await oldBannerDistribution.connect(owner).changeId(oldBannerId);
+
+            console.log('\t', "▶️ Testing require condition...");
+            await expect(oldBannerDistribution.connect(owner).withdrawOldBanner(0)).to.revertedWith("OLDBANNER: Amount must be greater than 0");
+            await expect(oldBannerDistribution.connect(owner).withdrawOldBanner(10000)).to.revertedWith("OLDBANNER: Not enough old banner");
+            console.log("\t", "✅ Test passed !");
+
+
+            console.log('\t', "▶️ Testing to withdraw banner...");
+            let oldOwnerBalance = await openseaContract.connect(owner).balanceOf(owner.address, oldBannerId);
+            expect(oldOwnerBalance).to.equal(0);
+            console.log('\t', "🏳 Owner old banner balance : ", oldOwnerBalance.toString());
+            let oldContracBalance = await openseaContract.connect(owner).balanceOf(oldBannerDistribution.address, oldBannerId);
+            console.log('\t', "🏳 Contract old banner balance : ", oldContracBalance.toString());
+            await oldBannerDistribution.connect(owner).withdrawOldBanner(nbToken);
+            let newOwnerBalance = await openseaContract.connect(owner).balanceOf(owner.address, oldBannerId);
+            expect(newOwnerBalance).to.equal(nbToken);
+            console.log('\t', "🏳 Owner new banner balance : ", newOwnerBalance.toString());
+            let newContracBalance = await openseaContract.connect(owner).balanceOf(oldBannerDistribution.address, oldBannerId);
+            expect(newContracBalance).to.equal(oldContracBalance.sub(nbToken));
+            console.log('\t', "🏳 Contract new banner balance : ", newContracBalance.toString());
+            console.log("\t", "✅ Test passed !");
+
+        });
+    });
+
+    describe("🪙️ withdrawMaticStuck()", function () {
+        it("Try withdrawMaticStuck function...", async function () {
+            const [owner] = await ethers.getSigners();
+            let nbMatic = 1;
+
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [gotchiFarmyWalletAddress],
+            });
+            let gotchiFarmyAccount = await ethers.getSigner(gotchiFarmyWalletAddress);
+
+            // Testing require function
+            console.log('\t', "▶️ Testing require condition...");
+            await expect(oldBannerDistribution.connect(gotchiFarmyAccount).withdrawMaticStuck()).to.revertedWith("Ownable: caller is not the owner");
+            await expect(oldBannerDistribution.connect(owner).withdrawMaticStuck()).to.revertedWith("OLDBANNER: No Matic to withdraw");
+            console.log("\t", "✅ Test passed !");
+
+            /* Without this function receive() external payable {} the test will fail because the contract doesn't have any matic
+
+            // Send matic to the contract
+            console.log('\t', "📤️ GotchiFarmy send Matic to the contract");
+             await owner.sendTransaction({
+                 to: oldBannerDistribution.address,
+                 value: ethers.utils.parseEther(nbMatic.toString())
+             });
+
+            // Check if matic is in the contract
+            let contractBalance = await ethers.provider.getBalance(oldBannerDistribution.address);
+            expect(contractBalance.toString()).to.equal(ethers.utils.parseEther(nbMatic.toString()).toString());
+            console.log('\t', "🏦 Contract matic balance at the begining : ", ethers.utils.formatEther(contractBalance));
+
+            // Withdraw matic
+            console.log('\t', "▶️ Withdraw matic...");
+            let oldOwnerBalance = await ethers.provider.getBalance(owner.address);
+            let txWithdraw = await oldBannerDistribution.connect(owner).withdrawMaticStuck();
+            let receipt = await txWithdraw.wait();
+            let newContractBalance = await ethers.provider.getBalance(oldBannerDistribution.address);
+            expect(newContractBalance.toString()).to.equal("0");
+            console.log('\t', "🏦 Contract matic balance at the end : ", ethers.utils.formatEther(newContractBalance));
+            let newOwnerBalance = await ethers.provider.getBalance(owner.address);
+            let excpectedBalance =(BigInt(ethers.utils.parseEther(nbMatic.toString())) + BigInt(oldOwnerBalance)) - (BigInt(receipt.gasUsed) *  BigInt(receipt.effectiveGasPrice));
+            expect(newOwnerBalance.toString()).to.equal(excpectedBalance.toString());
+            console.log('\t', "🏦 Owner matic balance at the end : ", ethers.utils.formatEther(newOwnerBalance));
+            console.log("\t", "✅ Test passed !");
+            */
+        });
+    });
 
     describe("🏳 ditribution(uint256, uint256)", function () {
         it("Try to buy one banner...", async function () {
