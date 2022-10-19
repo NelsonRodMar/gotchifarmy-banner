@@ -26,7 +26,7 @@ describe('GotchiFarmyBanner (proxy)', function () {
             console.log('\t', "Mint price : ", ethers.utils.formatEther(oldMintPrice));
 
             let tokenSymbol = await gotchiFarmyBanner.symbol();
-            expect(tokenSymbol).to.equal("BANNER");
+            expect(tokenSymbol).to.equal("GFA");
             console.log('\t', "Token Symbol : ", tokenSymbol);
 
             let tokenName = await gotchiFarmyBanner.name();
@@ -225,4 +225,47 @@ describe('GotchiFarmyBanner (proxy)', function () {
             console.log('\t', "✅️ Test passed");
         });
     });
+
+
+    describe("🪙️ withdrawERC20Stuck(address)", function () {
+        it("Try withdrawERC20Stuck function...", async function () {
+            const [owner, stranger] = await ethers.getSigners();
+            let nbGhst = 4;
+            const ghstContract = new ethers.Contract(ghstContractAddress, ghstContractAbi);
+
+            console.log(ghstContract.address);
+
+            // Testing require function
+            console.log('\t', "▶️ Testing require condition...");
+            await expect(gotchiFarmyBanner.connect(stranger).withdrawERC20Stuck(ghstContract.address)).to.revertedWith("Ownable: caller is not the owner");
+            await expect(gotchiFarmyBanner.connect(owner).withdrawERC20Stuck(ethers.constants.AddressZero)).to.revertedWith("BANNER: Invalid token address");
+            await expect(gotchiFarmyBanner.connect(owner).withdrawERC20Stuck(ghstContract.address)).to.revertedWith("BANNER: No token to withdraw");
+            console.log("\t", "✅ Test passed !");
+
+
+            console.log('\t', "📤️️ NelsonRodMar send GHST to the contract...");
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [nelsonRodMarWalletAddress],
+            });
+            let nelsonRodMarAccount = await ethers.getSigner(nelsonRodMarWalletAddress);
+            await ghstContract.connect(nelsonRodMarAccount).transfer(gotchiFarmyBanner.address, ethers.utils.parseEther(nbGhst.toString()));
+            let oldContractBalance = await ghstContract.connect(owner).balanceOf(gotchiFarmyBanner.address);
+            let oldOwnerBalance = await ghstContract.connect(owner).balanceOf(owner.address);
+            expect(oldContractBalance.toString()).to.equal(ethers.utils.parseEther(nbGhst.toString()));
+            console.log('\t', "🏦 Contract GHST balance at the begining : ", ethers.utils.formatEther(oldContractBalance));
+            console.log('\t', "🏦 Owner GHST balance at the begining : ", ethers.utils.formatEther(oldOwnerBalance));
+
+            console.log('\t', "▶️ Withdraw GHST...");
+            await gotchiFarmyBanner.connect(owner).withdrawERC20Stuck(ghstContract.address);
+            let newContractBalance = await ghstContract.connect(owner).balanceOf(gotchiFarmyBanner.address);
+            let newOwnerBalance = await ghstContract.connect(owner).balanceOf(owner.address);
+            expect(newContractBalance).to.equal(0);
+            console.log('\t', "🏦 Contract GHST balance at the end : ", ethers.utils.formatEther(newContractBalance));
+            expect(newOwnerBalance.toString()).to.equal(ethers.utils.parseEther(nbGhst.toString()));
+            console.log('\t', "🏦 Owner GHST balance at the end : ", ethers.utils.formatEther(newOwnerBalance));
+            console.log("\t", "✅ Test passed !");
+        });
+    });
+
 });

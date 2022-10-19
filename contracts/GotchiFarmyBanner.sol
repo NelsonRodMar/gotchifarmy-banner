@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
                                                          |___/
 */
 
-import './interfaces/IGhst.sol';
+import './interfaces/IERC20.sol';
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -26,9 +26,9 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
 
     address public gotchiFarmyVault;
     address public artist;
-    uint96 public percentageArtist; // 15%
+    uint96 public percentageArtist;
 
-    IGhst public ghst;
+    IERC20 public ghst;
     address  private constant GHST_CONTRACT = 0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7;
 
     event NewMint(address indexed _to, uint256 indexed _id, uint256 _amount);
@@ -40,16 +40,16 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
         _pause();
         price = 10 ether;
         id = 5;
-        symbol = "BANNER";
+        symbol = "GFA";
         name = "Gotchi Farmy Banner";
-        ghst = IGhst(GHST_CONTRACT);
+        ghst = IERC20(GHST_CONTRACT);
         percentageArtist = 1500; // 15%
         gotchiFarmyVault = 0x53a75d41bfc6b5F9E4D4F9769eb12CF58904F37a;
         artist = 0x860980abaD6267C6dd35D8B1C1B14Fa6741DB3A6;
         _setDefaultRoyalty(gotchiFarmyVault, 1000); // 10%
     }
 
-    // @notice The function to mint new banner, free for admin only and 5 matic for user
+    // @notice The function to mint new banner, free for admin only and payed for user
     function mint(uint256 amount, uint256 _amountInGhst) public whenNotPaused nonReentrant {
         require(amount > 0, "BANNER: Amount must be greater than 0");
         require(msg.sender == owner() || _amountInGhst >= price * amount, "BANNER: Not enough GHST or not admin");
@@ -71,7 +71,6 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
 
         emit NewMint(msg.sender, id, amount);
     }
-
 
     /* //////////////////////////////////////////////////////////////
                             ONLY OWNER FUNCTIONS
@@ -144,6 +143,16 @@ contract GotchiFarmyBanner is ERC1155Upgradeable, ERC2981Upgradeable, OwnableUpg
     // @notice THe function to burn multiple NFT
     function burnBatch(address _from, uint256[] memory _ids, uint256[] memory _amounts) external onlyOwner {
         _burnBatch(_from, _ids, _amounts);
+    }
+
+    // @notice The function to withdraw the stuck in the contract
+    function withdrawERC20Stuck(address tokenAddress) public onlyOwner {
+        require(tokenAddress != address(0), "BANNER: Invalid token address");
+        IERC20 token = IERC20(tokenAddress);
+        uint256 balance = token.balanceOf(address(this));
+        require(balance > 0, "BANNER: No token to withdraw");
+        bool successTransfer =  token.transfer(msg.sender, balance);
+        require(successTransfer, "BANNER: Token transfer to owner failed");
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC2981Upgradeable) returns (bool) {
