@@ -3,7 +3,7 @@ async function main() {
 
     const GotchiFarmyBannerV2 = await ethers.getContractFactory("GotchiFarmyBannerV2");
     console.log("Preparing upgrade...");
-    const gotchiFarmyBannerV2Address = await upgrades.prepareUpgrade(proxyAddress, GotchiFarmyBannerV2);
+    const gotchiFarmyBannerV2Address = await upgrades.upgradeProxy(proxyAddress, GotchiFarmyBannerV2);
     console.log("GotchiFarmyBannerV2 at:", gotchiFarmyBannerV2Address);
 }
 
