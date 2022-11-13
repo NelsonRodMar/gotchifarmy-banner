@@ -269,17 +269,18 @@ describe('GotchiFarmyBanner (proxy)', function () {
     });
 
     describe("🪙️ upgradeProxy(proxy, contract)", function () {
+
         
         it("Should execute a new function once the contract is upgraded", async () => {
+          const [owner, newOwner] = await ethers.getSigners();
+
           const upgradeableV2Factory = await ethers.getContractFactory(
             "GotchiFarmyBannerV2",
             owner
           );
         
           await upgrades.upgradeProxy(gotchiFarmyBanner.address, upgradeableV2Factory);
-          gotchiFarmyBannerV2 = upgradeableV2Factory.attach(
-            gotchiFarmyBanner.address
-          ) as GotchiFarmyBannerV2;
+          gotchiFarmyBannerV2 = upgradeableV2Factory.attach(gotchiFarmyBanner.address);
           expect(await gotchiFarmyBannerV2.version()).to.eq(0);
         });
 
