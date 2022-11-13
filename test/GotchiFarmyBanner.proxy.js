@@ -268,4 +268,24 @@ describe('GotchiFarmyBanner (proxy)', function () {
         });
     });
 
+    describe("🪙️ upgradeProxy(proxy, contract)", function () {
+        
+        it("Should execute a new function once the contract is upgraded", async () => {
+          const upgradeableV2Factory = await ethers.getContractFactory(
+            "GotchiFarmyBannerV2",
+            owner
+          );
+        
+          await upgrades.upgradeProxy(gotchiFarmyBanner.address, upgradeableV2Factory);
+          gotchiFarmyBannerV2 = upgradeableV2Factory.attach(
+            gotchiFarmyBanner.address
+          ) as GotchiFarmyBannerV2;
+          expect(await gotchiFarmyBannerV2.version()).to.eq(0);
+        });
+
+        it("Should get the same stored values after the contract is upgraded", async () => {
+            let newPrice = await gotchiFarmyBannerV2.price();
+            expect(newPrice).to.equal(ethers.utils.parseEther("10"));
+        });
+    });
 });
