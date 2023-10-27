@@ -10,7 +10,7 @@ All the contract are deployed on the Polygon network via a proxy contract.
 ---
 ## 📝 Contract addresses
 
-Comming soon
+Polygon Address : [https://polygonscan.com/address/0x637bA33ec290373F69E4D5bA040B0B5d0d0919f2](https://polygonscan.com/address/0x637bA33ec290373F69E4D5bA040B0B5d0d0919f2)
 
 ---
 ## Environment variables
